@@ -11,10 +11,10 @@ from OpenGL.GL import (
     GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT,
     GL_DEPTH_TEST
 )
-import pygame
 import numpy as np
 
 from . import matrix
+from . import sdl2
 from .ms3d import MS3DModel
 from .bone_model import BoneModel
 
@@ -27,8 +27,16 @@ parser.add_argument('--show-skeleton', action='store_true')
 
 args = parser.parse_args()
 
-pygame.init()
-pygame.display.set_mode((800, 600), pygame.DOUBLEBUF | pygame.OPENGL)
+sdl2.init(sdl2.Init.EVERYTHING)
+window = sdl2.create_window(
+    'Skeletal Animation',
+    (
+        sdl2.WindowPos.UNDEFINED, sdl2.WindowPos.UNDEFINED,
+        800, 600
+    ),
+    sdl2.WindowFlags.OPENGL
+)
+gl_context = sdl2.gl.create_context(window)
 
 glViewport(0, 0, 800, 600)
 
@@ -107,8 +115,11 @@ while running:
 
     # rotate the view by one degree
     view_matrix = view_matrix @ rot
-    pygame.display.flip()
+    sdl2.gl.swap_window(window)
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+    for event in sdl2.event.poll():
+        if event.type == sdl2.EventType.QUIT:
             running = False
+
+sdl2.gl.delete_context(gl_context)
+sdl2.destroy_window(window)
