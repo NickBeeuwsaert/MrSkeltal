@@ -60,7 +60,6 @@ class MS3DModel(object):
         self.shader = (
             SkinShader(len(self.bones)) if self.bones else SimpleShader()
         )
-        # self.shader = SimpleShader()
 
     @reify
     def matrix(self):

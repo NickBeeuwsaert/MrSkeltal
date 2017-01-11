@@ -53,26 +53,3 @@ class Group(object):
             triangle.texcoords
             for triangle in self.triangles
         ], dtype=np.float32)
-
-    def vertex_iter(self):
-        for triangle in self.triangles:
-            yield from triangle.vertices
-
-    @lru_cache(None)
-    def vertex_buffer_at_t(self, t):
-        vertices = []
-
-        for vertex in self.vertex_iter():
-            new_vert = np.array([0, 0, 0, 0], dtype=np.float32)
-            x, y, z = vertex.coords
-            for bone, weight in zip(vertex.bones, vertex.bone_weights):
-                if not bone:
-                    continue
-                new_vert += np.dot(
-                    bone.matrix_at_t(t) @ bone.inverse_matrix,
-                    np.array([x, y, z, 1], dtype=np.float32)
-                ) * weight
-
-            vertices.append(new_vert[:3])
-
-        return np.array(vertices, dtype=np.float32)

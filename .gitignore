@@ -1,3 +1,12 @@
+## Cache files
 __pycache__/
 .py[cod]
+
+# Packaging
+*.egg-info/
+
+## Virtual Environments
 venv/
+
+## Testing
+.tox/

@@ -59,8 +59,8 @@ class Struct(Type):
         return dict(result)
 
     def serialize(self, data, fp):
-        for (name, child), element in zip(self.children, data.items()):
-            child.serialize(element, fp)
+        for name, child in self.children:
+            child.serialize(data[name], fp)
 
 class Tuple(Type):
     def deserialize(self, fp):
@@ -128,7 +128,7 @@ class Sequence(Type):
         self.length_type.serialize(len(data), fp)
 
         for element in data:
-            self.target_type.serialize(element, data)
+            self.target_type.serialize(element, fp)
 
 
 class String(Type):
@@ -143,7 +143,7 @@ class String(Type):
         return raw_string.decode(self.encoding)
 
     def serialize(self, data, fp):
-        fp.write(data.encode(self.encoding).ljust(self.length, '\x00'))
+        fp.write(data.encode(self.encoding).ljust(self.length, b'\x00'))
 
 
 
@@ -164,7 +164,7 @@ class DynamicString(Type):
 
     def serialize(self, data, fp):
         raw_data = data.encode(self.encoding)
-        self.length_type.serialize(raw_data, fp)
+        self.length_type.serialize(len(raw_data), fp)
         fp.write(raw_data)
 
 
