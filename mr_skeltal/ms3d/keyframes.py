@@ -26,7 +26,7 @@ class Keyframes(object):
         a = next(it)
 
         if t < a.time:
-            return a
+            return a.value
 
         for b in it:
             if a.time <= t < b.time:
