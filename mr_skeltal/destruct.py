@@ -3,21 +3,28 @@ I'm embracing Python 3.6 here, using __init_subclass__ and relying on the order
 of cls.__dict__
 '''
 import collections
+from collections import OrderedDict as odict
 import operator
 import struct
 
 from .decorator import reify
 
+
+class DestructError(Exception):
+    pass
+
+
 class Type(object):
-    name = ''
 
     def __init__(self, *args, **kwargs):
 
-        self.children = (
-            self.__child_types__ +
-            list(args) +
-            list(self._handle_subtypes(kwargs))
-        )
+        self.children = self.__child_types__ + [
+            ('', child) for child in args if isinstance(child, Type)
+        ] + [
+            (name, child)
+            for name, child in kwargs.items()
+            if isinstance(child, Type)
+        ]
 
     def deserialize(self, fp):
         raise NotImplementedError(
@@ -29,45 +36,41 @@ class Type(object):
             f'{self.__class__.__name__} doesn\'t implement serialize'
         )
 
-    @staticmethod
-    def _handle_subtypes(d):
-        for name, value in d.items():
-            if not isinstance(value, Type):
-                continue
-
-            if not value.name:
-                value.name = name
-
-            yield value
-
     @classmethod
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
-        cls.__child_types__ = list(cls._handle_subtypes(cls.__dict__))
+        cls.__child_types__ = [
+            (name, child)
+            for name, child in vars(cls).items()
+            if isinstance(child, Type)
+        ]
 
 
 class Struct(Type):
     def deserialize(self, fp):
-        return {
-            child.name: child.deserialize(fp)
-            for child in self.children
-        }
+        result = []
+        for name, child in self.children:
+            try:
+                result.append((name, child.deserialize(fp)))
+            except Exception as e:
+                raise DestructError(f'Error when trying to deserialize {name}') from e
+
+        return dict(result)
 
     def serialize(self, data, fp):
-        for child, element in zip(self.children, data):
-            child.serialize(fp)
-
+        for (name, child), element in zip(self.children, data.items()):
+            child.serialize(element, fp)
 
 class Tuple(Type):
     def deserialize(self, fp):
         return tuple(
             child.deserialize(fp)
-            for child in self.children
+            for _, child in self.children
         )
 
     def serialize(self, data, fp):
-        for child, element in zip(self.children, data):
+        for (name, child), element in zip(self.children, data):
             child.serialize(element, fp)
 
 class NamedTuple(Type):
@@ -75,26 +78,24 @@ class NamedTuple(Type):
     def namedtuple(self):
         return collections.namedtuple(
             self.__class__.__name__,
-            map(operator.attrgetter('name'), self.children)
+            [name for name, child in self.children]
         )
 
     def deserialize(self, fp):
         return self.namedtuple._make(
             child.deserialize(fp)
-            for child in self.children
+            for name, child in self.children
         )
 
     def serialize(self, data, fp):
-        for child, element in zip(self.children, data):
+        for (name, child), element in zip(self.children, data):
             child.serialize(element, fp)
 
 
 class Number(Type):
-    byte_order = '='
-
-    @property
-    def fmt(self):
-        raise NotImplementedError()
+    def __init__(self, fmt, byte_order='='):
+        self.fmt = fmt
+        self.byte_order = byte_order
 
     @reify
     def struct(self):
@@ -107,27 +108,6 @@ class Number(Type):
 
     def serialize(self, data, fp):
         fp.write(self.struct.pack(data))
-
-class Byte(Number):
-    fmt = 'b'
-
-class UnsignedByte(Number):
-    fmt = 'B'
-
-class Short(Number):
-    fmt = 'h'
-
-class UnsignedShort(Number):
-    fmt = 'H'
-
-class Int(Number):
-    fmt = 'i'
-
-class UnsignedInt(Number):
-    fmt = 'I'
-
-class Float(Number):
-    fmt = 'f'
 
 
 class Sequence(Type):

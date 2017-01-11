@@ -4,6 +4,8 @@ import math
 
 from math import cos, sin
 
+def unit(vec):
+    return np.divide(vec, np.linalg.norm(vec), dtype=np.float32)
 
 def rotate_x(angle):
     c = math.cos(angle)
@@ -55,6 +57,19 @@ def rotation(rotation):
     ], dtype=np.float32)
 
 
+def axis_angle_rotation(angle, axis):
+    c = cos(angle)
+    s = sin(angle)
+    x, y, z = unit(axis)
+
+    return np.array([
+        [     c + x * x * (1 - c), x * y * (1 - c) - z * s, x * z * (1 - c) + y * s, 0],
+        [ y * x * (1 - c) + z * s,     c + y * y * (1 - c), y * z * (1 - c) - x * s, 0],
+        [ z * x * (1 - c) - y * s, z * y * (1 - c) + x * s,     c + z * z * (1 - c), 0],
+        [                       0,                       0,                       0, 1]
+    ], dtype=np.float32)
+
+
 def translate(translation):
     x, y, z = translation
     return np.array([
@@ -75,8 +90,6 @@ def scale(scale):
     ], dtype=np.float32)
 
 
-def unit(vec):
-    return np.divide(vec, np.linalg.norm(vec), dtype=np.float32)
 
 
 def look_at(eye, center, up):

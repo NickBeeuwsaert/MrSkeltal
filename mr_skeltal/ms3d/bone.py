@@ -14,21 +14,26 @@ class Bone(object):
         self,
         name, parent_name,
         rotation, position,
-        keyframes={},
-        **kwargs
+        keyframes={}
     ):
         self.name = name
         self.parent_name = parent_name
         self.rotation = rotation
         self.position = position
         self.children = []
+
         self.rotation_keyframes = Keyframes([
             (keyframe['time'], keyframe['rotation'])
-            for keyframe in keyframes.get('rotation')
+            for keyframe in keyframes.get('rotation') or [
+                dict(time=0.0, rotation=(0, 0, 0))
+            ]
         ])
+
         self.translation_keyframes = Keyframes([
             (keyframe['time'], keyframe['translation'])
-            for keyframe in keyframes.get('translation')
+            for keyframe in keyframes.get('translation') or [
+                dict(time=0.0, translation=(0, 0, 0))
+            ]
         ])
 
     @reify

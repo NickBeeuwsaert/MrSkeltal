@@ -22,11 +22,12 @@ class Keyframes(object):
     def frame_at_time(self, t):
         t = np.clip(t, 0.0, self.max_time)
 
-        if not self.frames:
-            raise ValueError('No frames!')
-
         it = iter(self.frames)
         a = next(it)
+
+
+        if t < a.time:
+            return a
 
         for b in it:
             if a.time <= t < b.time:

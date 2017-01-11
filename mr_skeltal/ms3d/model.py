@@ -1,31 +1,13 @@
-import contextlib
+from collections import OrderedDict as odict
 
 import numpy as np
-from OpenGL.GL import *  # noqa: F403
 
 from .. import texture
 from ..decorator import reify
-from ..shaders.skin import SkinShader
-from . import Bone, Triangle, Group, Vertex, MS3DSpec
+from . import Bone, Triangle, Group, Vertex, MS3DSpec, SkinShader, SimpleShader
 
 
 file_spec = MS3DSpec()
-
-
-@contextlib.contextmanager
-def vertex_attributes(*attributes):
-    for attr in attributes:
-        glEnableVertexAttribArray(attr)
-    yield
-    for attr in reversed(attributes):
-        glDisableVertexAttribArray(attr)
-
-
-def _handle_vertex(vert, vert_ex):
-    return (
-        [*vert_ex['weights'], 1.0 - sum(vert_ex['weights'])],
-        [vert['bone_id'], *vert_ex['bone_ids']]
-    )
 
 
 class MS3DModel(object):
@@ -36,36 +18,49 @@ class MS3DModel(object):
         self.animation_fps = data['animation_fps']
         self.total_frames = data['total_frames']
         self.current_time = data['current_time']
-        self.bones = []
+        self.bones = odict()
         self.vertices = []
         self.triangles = []
         self.groups = []
         self._timestamp = 0.0
 
-        self.bones.extend(Bone(**bone) for bone in data['joints'])
-        # Build up a joint tree
-        bone_map = {bone.name: bone for bone in self.bones}
-        for name, bone in bone_map.items():
+        self.bones.update([
+            (bone['name'], Bone(
+                bone['name'],
+                bone['parent_name'],
+                bone['rotation'],
+                bone['position'],
+                bone['keyframes']
+            )) for bone in data['joints']
+        ])
+
+        for bone in self.bones.values():
             if not bone.parent_name:
                 continue
-            bone.parent_bone = bone_map[bone.parent_name]
+
+            bone.parent_bone = self.bones[bone.parent_name]
             bone.parent_bone.children.append(bone)
 
-        for vert, vert_ex in zip(data['vertices'], data['vertices_ex']):
-            weights, indices = _handle_vertex(vert, vert_ex)
-            self.vertices.append(Vertex(vert['vertex'], weights, indices))
+        self.vertices += [Vertex(vert['vertex'], [
+            *vert_ex['weights'], 1.0 - sum(vert_ex['weights'])
+        ], [
+            vert['bone_id'], *vert_ex['bone_ids']
+        ]) for vert, vert_ex in zip(data['vertices'], data['vertices_ex'])]
 
-        for tri in data['triangles']:
-            self.triangles.append(Triangle([
-                self.vertices[idx] for idx in tri['vertex_indices']
-            ], tri['vertex_normals'], list(zip(tri['s'], tri['t']))))
+        self.triangles += [Triangle([
+            self.vertices[idx] for idx in triangle['vertex_indices']
+        ], triangle['vertex_normals'], list(
+            zip(triangle['s'], triangle['t'])
+        )) for triangle in data['triangles']]
 
-        for group in data['groups']:
-            self.groups.append(Group(group['name'], [
-                self.triangles[idx] for idx in group['triangle_indices']
-            ], 0))
+        self.groups += [Group(group['name'], [
+            self.triangles[idx] for idx in group['triangle_indices']
+        ], 0) for group in data['groups']]
 
-        self.shader = SkinShader(num_joints=len(self.bones))
+        self.shader = (
+            SkinShader(len(self.bones)) if self.bones else SimpleShader()
+        )
+        # self.shader = SimpleShader()
 
     @reify
     def matrix(self):
@@ -75,65 +70,17 @@ class MS3DModel(object):
     def bone_matrices(self):
         return np.array([
             bone.matrix_at_t(self.timestamp) @ bone.inverse_matrix
-            for bone in self.bones
+            for bone in self.bones.values()
         ], dtype=np.float32)
 
     def render(self, view_matrix, projection_matrix):
-        shader = self.shader
-        mv_matrix = view_matrix @ self.matrix
-
-        glUseProgram(self.shader.program)
-        with vertex_attributes(
-            shader.vertices, shader.texcoords,
-            shader.bone_ids, shader.bone_weights
-        ):
-            glBindTexture(GL_TEXTURE_2D, self.texture)
-            glUniform1i(self.shader.texture, 0)
-            glUniformMatrix4fv(
-                self.shader.model_view_matrix, 1, GL_TRUE, mv_matrix
-            )
-            glUniformMatrix4fv(
-                self.shader.projection_matrix, 1, GL_TRUE, projection_matrix
-            )
-            glUniformMatrix4fv(
-                self.shader.bone_matrices,
-                len(self.bones), GL_TRUE,
-                self.bone_matrices
-            )
-
-            for group in self.groups:
-                glVertexAttribPointer(
-                    self.shader.bone_ids,
-                    4, GL_SHORT, GL_FALSE, 0,
-                    group.bone_id_buffer
-                )
-                glVertexAttribPointer(
-                    self.shader.bone_weights,
-                    4, GL_FLOAT, GL_FALSE, 0,
-                    group.bone_weight_buffer
-                )
-                glVertexAttribPointer(
-                    self.shader.vertices,
-                    3, GL_FLOAT, GL_FALSE, 0,
-                    group.vertex_buffer
-                )
-                glVertexAttribPointer(
-                    self.shader.texcoords,
-                    2, GL_FLOAT, GL_FALSE, 0,
-                    group.texcoord_buffer
-                )
-
-                glDrawArrays(GL_TRIANGLES, 0, len(group.vertex_buffer))
+        self.shader.render(self, view_matrix, projection_matrix)
 
     @property
     def animation_length(self):
         t = 0.0
-        for bone in self.bones:
-            t = max(
-                t,
-                bone.rotation_keyframes.max_time,
-                bone.translation_keyframes.max_time
-            )
+        for bone in self.bones.values():
+            t = max(t, bone.rotation_keyframes.max_time, bone.translation_keyframes.max_time)
         return t
 
     @property
@@ -142,7 +89,8 @@ class MS3DModel(object):
 
     @timestamp.setter
     def timestamp(self, t):
-        self._timestamp = t % self.animation_length
+        if self.animation_length:
+            self._timestamp = t % self.animation_length
 
     @reify
     def texture(self):
