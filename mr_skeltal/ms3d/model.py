@@ -77,10 +77,13 @@ class MS3DModel(object):
 
     @property
     def animation_length(self):
-        t = 0.0
-        for bone in self.bones.values():
-            t = max(t, bone.rotation_keyframes.max_time, bone.translation_keyframes.max_time)
-        return t
+        return max([
+            max(
+                bone.rotation_keyframes.max_time,
+                bone.translation_keyframes.max_time
+            )
+            for bone in self.bones.values()
+        ], default=0.0)
 
     @property
     def timestamp(self):

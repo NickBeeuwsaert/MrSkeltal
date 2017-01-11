@@ -1,6 +1,20 @@
 import weakref
 
-from OpenGL.GL import *  # noqa: F403
+from OpenGL.GL import (
+    glCreateShader, glCreateProgram,
+    glShaderSource, glCompileShader,
+    glLinkProgram,
+    glGetShaderiv, glGetProgramiv,
+    glGetShaderInfoLog, glGetProgramInfoLog,
+    glAttachShader,
+    glDeleteShader, glDeleteProgram,
+    glGetUniformLocation, glGetAttribLocation
+)
+from OpenGL.GL import (
+    GL_VERTEX_SHADER, GL_FRAGMENT_SHADER,
+    GL_LINK_STATUS, GL_COMPILE_STATUS,
+    GL_FALSE
+)
 
 
 class ShaderException(Exception):

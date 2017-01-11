@@ -1,9 +1,16 @@
 import argparse
 from collections import namedtuple
 from functools import reduce
-import math, time
+import math
+import time
 
-from OpenGL.GL import *  # noqa: F403
+from OpenGL.GL import (
+    glViewport, glClear, glEnable, glClearColor
+)
+from OpenGL.GL import (
+    GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT,
+    GL_DEPTH_TEST
+)
 import pygame
 import numpy as np
 
@@ -28,7 +35,6 @@ glViewport(0, 0, 800, 600)
 glEnable(GL_DEPTH_TEST)
 glClearColor(0, 0, 0, 0)
 
-# model = MS3DModel('guy_anim.ms3d')
 model = MS3DModel(args.model)
 bone_model = BoneModel()
 start = time.time()
@@ -47,32 +53,34 @@ view_matrix = matrix.look_at(
     eye=(0, model_h / 2, -distance),
     center=(0, model_h / 2, 0),
     up=UP
-)#@ matrix.rotate_y(math.pi)
+)
 
 rot = matrix.rotate_y(math.radians(1))
+
 
 def draw_skeleton(model, bone_model):
     for bone in model.bones.values():
 
         # Don't draw bones that don't have a parent (a root bone)
         # or bones that are connected to a root bone
-        if not bone.parent_bone: continue
+        if not bone.parent_bone:
+            continue
         # if not bone.parent_bone.parent_bone: continue
 
         # Calculate the difference between this bone and its parent bone
-        A = np.dot(bone.matrix_at_t(model.timestamp), [0, 0, 0, 1])[:3]
-        B = np.dot(bone.parent_bone.matrix_at_t(model.timestamp), [0, 0, 0, 1])[:3]
+        A = (bone.matrix_at_t(model.timestamp) @ [0, 0, 0, 1])[:3]
+        B = (bone.parent_bone.matrix_at_t(model.timestamp) @ [0, 0, 0, 1])[:3]
         delta = A - B
         scale = np.linalg.norm(delta)
 
-        # Don't attempt to draw bones that are so small they cause a zero division
-        # error
+        # Don't attempt to draw bones that are so small they cause a zero
+        # division error
         if np.isclose(scale, 0.0):
             continue
 
         angle = math.acos(np.dot(UP, delta / scale))
-        # Get the vector that is perpendicular to the plain formed by the UP vector
-        # And the current orientation of the bone
+        # Get the vector that is perpendicular to the plain formed by the UP
+        # vector And the current orientation of the bone
         axis = np.cross(UP, delta)
 
         # Translate, scale and rotate the bone
@@ -82,6 +90,7 @@ def draw_skeleton(model, bone_model):
             matrix.axis_angle_rotation(angle, axis)
         ])
         bone_model.render(view_matrix, projection_matrix)
+
 
 running = True
 while running:

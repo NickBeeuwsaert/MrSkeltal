@@ -1,6 +1,18 @@
 import numpy as np
 from PIL import Image
-from OpenGL.GL import *  # noqa: F403
+from OpenGL.GL import (
+    glGenTextures, glActiveTexture, glBindTexture,
+    glTexParameteri, glTexParameterf,
+    glTexImage2D
+)
+from OpenGL.GL import (
+    GL_TEXTURE_2D, GL_TEXTURE0,
+    GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER,
+    GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T,
+    GL_UNSIGNED_BYTE,
+    GL_RGB,
+    GL_NEAREST, GL_LINEAR, GL_CLAMP
+)
 
 
 def load(file_path):

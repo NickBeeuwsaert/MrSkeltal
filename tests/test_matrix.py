@@ -5,6 +5,7 @@ import numpy as np
 
 from mr_skeltal import matrix
 
+
 def test_rotate_x():
     np.testing.assert_almost_equal(
         matrix.rotate_x(radians(90)),
@@ -19,10 +20,10 @@ def test_rotate_x():
     np.testing.assert_almost_equal(
         matrix.rotate_x(radians(45)),
         np.array([
-            [1,         0,          0, 0],
-            [0, 1/sqrt(2), -1/sqrt(2), 0],
-            [0, 1/sqrt(2),  1/sqrt(2), 0],
-            [0,         0,          0, 1]
+            [1,           0,            0, 0],
+            [0, 1 / sqrt(2), -1 / sqrt(2), 0],
+            [0, 1 / sqrt(2),  1 / sqrt(2), 0],
+            [0,           0,            0, 1]
         ])
     )
 
@@ -31,6 +32,7 @@ def test_rotate_x():
             np.linalg.det(matrix.rotate_x(radians(angle))),
             1.0
         )
+
 
 def test_rotate_y():
     np.testing.assert_almost_equal(
@@ -46,10 +48,10 @@ def test_rotate_y():
     np.testing.assert_almost_equal(
         matrix.rotate_y(radians(45)),
         np.array([
-            [ 1/sqrt(2), 0, 1/sqrt(2), 0],
-            [         0, 1,         0, 0],
-            [-1/sqrt(2), 0, 1/sqrt(2), 0],
-            [         0, 0,         0, 1]
+            [ 1 / sqrt(2), 0, 1 / sqrt(2), 0],
+            [           0, 1,           0, 0],
+            [-1 / sqrt(2), 0, 1 / sqrt(2), 0],
+            [           0, 0,           0, 1]
         ])
     )
     for angle in (15, 30, 45, 60, 75, 90):
@@ -57,6 +59,7 @@ def test_rotate_y():
             np.linalg.det(matrix.rotate_y(radians(angle))),
             1.0
         )
+
 
 def test_rotate_z():
     np.testing.assert_almost_equal(
@@ -72,10 +75,10 @@ def test_rotate_z():
     np.testing.assert_almost_equal(
         matrix.rotate_z(radians(45)),
         np.array([
-            [1/sqrt(2), -1/sqrt(2), 0, 0],
-            [1/sqrt(2),  1/sqrt(2), 0, 0],
-            [        0,          0, 1, 0],
-            [        0,          0, 0, 1]
+            [1 / sqrt(2), -1 / sqrt(2), 0, 0],
+            [1 / sqrt(2),  1 / sqrt(2), 0, 0],
+            [          0,          0, 1, 0],
+            [          0,          0, 0, 1]
         ])
     )
 
@@ -84,6 +87,7 @@ def test_rotate_z():
             np.linalg.det(matrix.rotate_z(radians(angle))),
             1.0
         )
+
 
 def test_rotation():
     np.testing.assert_almost_equal(

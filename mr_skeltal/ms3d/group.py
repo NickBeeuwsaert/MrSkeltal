@@ -1,13 +1,9 @@
-from functools import lru_cache
-
 import numpy as np
 
 from ..decorator import reify
 
 
 class Group(object):
-    # __slots__ = ['name', 'triangles', 'material']
-
     def __init__(self, name, triangles, material):
         self.name = name
         self.triangles = triangles

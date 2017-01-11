@@ -144,13 +144,16 @@ def extended_vertex_struct(subversion):
 
     raise ValueError('Invalid Subversion for extended vertices')
 
+
 class ExtendedJointStructV1(destruct.Struct):
     color = destruct.Tuple(float_t, float_t, float_t)
+
 
 class ExtendedModelStructV1(destruct.Struct):
     joint_size = float_t
     transparency_mode = int32_t
     alpha_ref = float_t
+
 
 class MS3DSpec(destruct.Struct):
     signature = destruct.Signature(b'MS3D000000')

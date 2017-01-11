@@ -1,7 +1,19 @@
 from textwrap import dedent
 
 import numpy as np
-from OpenGL.GL import *
+# from OpenGL.GL import *
+from OpenGL.GL import (
+    glUseProgram,
+    glEnableVertexAttribArray, glDisableVertexAttribArray,
+    glVertexAttribPointer,
+    glDrawElements,
+    glUniform1f, glUniformMatrix4fv
+)
+from OpenGL.GL import (
+    GL_TRUE, GL_FALSE,
+    GL_LINES, GL_TRIANGLES,
+    GL_UNSIGNED_BYTE, GL_FLOAT
+)
 
 from .shader import Uniform, Attribute, Shader
 from .decorator import reify
@@ -37,16 +49,28 @@ class SimpleShader(Shader):
 
         glEnableVertexAttribArray(self.vertices)
 
-        glUniformMatrix4fv(self.model_view_matrix, 1, GL_TRUE, view_matrix @ model.matrix)
-        glUniformMatrix4fv(self.projection_matrix, 1, GL_TRUE, projection_matrix)
+        glUniformMatrix4fv(
+            self.model_view_matrix, 1, GL_TRUE, view_matrix @ model.matrix
+        )
+        glUniformMatrix4fv(
+            self.projection_matrix, 1, GL_TRUE, projection_matrix
+        )
 
-        glVertexAttribPointer(self.vertices, 3, GL_FLOAT, GL_FALSE, 0, model.vertex_buffer)
+        glVertexAttribPointer(
+            self.vertices, 3, GL_FLOAT, GL_FALSE, 0, model.vertex_buffer
+        )
 
         glUniform1f(self.color_uniform, 0)
-        glDrawElements(GL_LINES, model.line_buffer.size, GL_UNSIGNED_BYTE, model.line_buffer)
+        glDrawElements(
+            GL_LINES, model.line_buffer.size,
+            GL_UNSIGNED_BYTE, model.line_buffer
+        )
 
         glUniform1f(self.color_uniform, 0.5)
-        glDrawElements(GL_TRIANGLES, model.index_buffer.size, GL_UNSIGNED_BYTE, model.index_buffer)
+        glDrawElements(
+            GL_TRIANGLES, model.index_buffer.size,
+            GL_UNSIGNED_BYTE, model.index_buffer
+        )
 
         glDisableVertexAttribArray(self.vertices)
 
@@ -59,10 +83,10 @@ class BoneModel(object):
     def vertex_buffer(self):
         return np.array([
             [0, 0, 0],
-            [-0.1, 0.1, 0.1], # left front
-            [ 0.1, 0.1, 0.1], # right front
-            [-0.1, 0.1,-0.1], # left back
-            [ 0.1, 0.1,-0.1], # right back
+            [-0.1, 0.1,  0.1],  # left front
+            [ 0.1, 0.1,  0.1],  # right front
+            [-0.1, 0.1, -0.1],  # left back
+            [ 0.1, 0.1, -0.1],  # right back
             [0, 1, 0]
         ], dtype=np.float32)
 

@@ -2,6 +2,7 @@ from io import BytesIO
 
 from mr_skeltal import destruct
 
+
 # Test binary for decoding
 BINARY_FILE = (b'Hello, world!\x00\x00\x00\x00\x00\x00\x00'
                b'\x84\xff' b'\xfa\xff\xd3\x04'
@@ -13,6 +14,7 @@ BINARY_FILE = (b'Hello, world!\x00\x00\x00\x00\x00\x00\x00'
                b'\x08\x00String 2'
                b'\x00\x00\x80@\x00\x00\xa0@\x00\x00\xc0@'
                b'\x00\x00\x80@\x00\x00\xa0@\x00\x00\xc0@')
+
 
 TEST_DATA = dict(
     string='Hello, world!',
@@ -38,9 +40,10 @@ TEST_DATA = dict(
 
 
 class NamedTuple(destruct.NamedTuple):
-    x=destruct.Number('f', '<')
-    y=destruct.Number('f', '<')
-    z=destruct.Number('f', '<')
+    x = destruct.Number('f', '<')
+    y = destruct.Number('f', '<')
+    z = destruct.Number('f', '<')
+
 
 class SomeChild(destruct.Struct):
     dynamic_string = destruct.DynamicString(destruct.Number('h', '<'))
@@ -50,6 +53,7 @@ class SomeChild(destruct.Struct):
         z=destruct.Number('f', '<')
     )
     named_tuple = NamedTuple()
+
 
 class SomeStruct(destruct.Struct):
     string = destruct.String(20)
@@ -65,15 +69,22 @@ class SomeStruct(destruct.Struct):
         SomeChild()
     )
 
+
 spec = SomeStruct()
+
 
 def test_deserialize():
     fp = BytesIO(BINARY_FILE)
 
-    assert TEST_DATA == spec.deserialize(fp), 'deserialized struct doesn\'t match reference!'
+    assert TEST_DATA == spec.deserialize(fp), (
+        'deserialized struct doesn\'t match reference!'
+    )
+
 
 def test_serialize():
     fp = BytesIO()
     spec.serialize(TEST_DATA, fp)
 
-    assert BINARY_FILE == fp.getvalue(), 'serialized struct doesn\'t match reference binary!'
+    assert BINARY_FILE == fp.getvalue(), (
+        'serialized struct doesn\'t match reference binary!'
+    )

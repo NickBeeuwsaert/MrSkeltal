@@ -25,7 +25,6 @@ class Keyframes(object):
         it = iter(self.frames)
         a = next(it)
 
-
         if t < a.time:
             return a
 

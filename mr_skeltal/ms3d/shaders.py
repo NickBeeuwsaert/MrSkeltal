@@ -3,10 +3,22 @@
 Shaders customized to work with MS3D Models (specifically, groups, and boneless
 models)
 """
-import contextlib
 from textwrap import dedent
 
-from OpenGL.GL import *  # noqa: F403
+from OpenGL.GL import (
+    glUseProgram,
+    glEnableVertexAttribArray,
+    glDisableVertexAttribArray,
+    glVertexAttribPointer,
+    glUniform1i, glUniformMatrix4fv,
+    glBindTexture,
+    glDrawArrays
+)
+from OpenGL.GL import (
+    GL_FALSE, GL_TRUE,
+    GL_FLOAT, GL_SHORT,
+    GL_TRIANGLES, GL_TEXTURE_2D
+)
 
 from ..shader import Uniform, Attribute, Shader
 
@@ -74,15 +86,30 @@ class SkinShader(Shader):
 
         glBindTexture(GL_TEXTURE_2D, model.texture)
         glUniform1i(self.texture, 0)
-        glUniformMatrix4fv(self.model_view_matrix, 1, GL_TRUE, view_matrix @ model.matrix)
-        glUniformMatrix4fv(self.projection_matrix, 1, GL_TRUE, projection_matrix)
-        glUniformMatrix4fv(self.bone_matrices, len(model.bones), GL_TRUE, model.bone_matrices)
+        glUniformMatrix4fv(
+            self.model_view_matrix, 1, GL_TRUE, view_matrix @ model.matrix
+        )
+        glUniformMatrix4fv(
+            self.projection_matrix, 1, GL_TRUE, projection_matrix
+        )
+        glUniformMatrix4fv(
+            self.bone_matrices, len(model.bones), GL_TRUE, model.bone_matrices
+        )
 
         for group in model.groups:
-            glVertexAttribPointer(self.bone_ids, 4, GL_SHORT, GL_FALSE, 0, group.bone_id_buffer)
-            glVertexAttribPointer(self.bone_weights, 4, GL_FLOAT, GL_FALSE, 0, group.bone_weight_buffer)
-            glVertexAttribPointer(self.vertices, 3, GL_FLOAT, GL_FALSE, 0, group.vertex_buffer)
-            glVertexAttribPointer(self.texcoords, 2, GL_FLOAT, GL_FALSE, 0, group.texcoord_buffer)
+            glVertexAttribPointer(
+                self.bone_ids, 4, GL_SHORT, GL_FALSE, 0, group.bone_id_buffer
+            )
+            glVertexAttribPointer(
+                self.bone_weights, 4, GL_FLOAT, GL_FALSE, 0,
+                group.bone_weight_buffer
+            )
+            glVertexAttribPointer(
+                self.vertices, 3, GL_FLOAT, GL_FALSE, 0, group.vertex_buffer
+            )
+            glVertexAttribPointer(
+                self.texcoords, 2, GL_FLOAT, GL_FALSE, 0, group.texcoord_buffer
+            )
 
             glDrawArrays(GL_TRIANGLES, 0, len(group.vertex_buffer))
 
@@ -90,6 +117,7 @@ class SkinShader(Shader):
         glDisableVertexAttribArray(self.bone_ids)
         glDisableVertexAttribArray(self.vertices)
         glDisableVertexAttribArray(self.texcoords)
+
 
 class SimpleShader(Shader):
     vertex_shader = dedent("""\
@@ -123,7 +151,6 @@ class SimpleShader(Shader):
     vertices = Attribute('aVertex')
     texcoords = Attribute('aTexCoord')
 
-
     def render(self, model, view_matrix, projection_matrix):
         glUseProgram(self.program)
 
@@ -132,12 +159,20 @@ class SimpleShader(Shader):
 
         glBindTexture(GL_TEXTURE_2D, model.texture)
         glUniform1i(self.texture, 0)
-        glUniformMatrix4fv(self.model_view_matrix, 1, GL_TRUE, view_matrix @ model.matrix)
-        glUniformMatrix4fv(self.projection_matrix, 1, GL_TRUE, projection_matrix)
+        glUniformMatrix4fv(
+            self.model_view_matrix, 1, GL_TRUE, view_matrix @ model.matrix
+        )
+        glUniformMatrix4fv(
+            self.projection_matrix, 1, GL_TRUE, projection_matrix
+        )
 
         for group in model.groups:
-            glVertexAttribPointer(self.vertices, 3, GL_FLOAT, GL_FALSE, 0, group.vertex_buffer)
-            glVertexAttribPointer(self.texcoords, 2, GL_FLOAT, GL_FALSE, 0, group.texcoord_buffer)
+            glVertexAttribPointer(
+                self.vertices, 3, GL_FLOAT, GL_FALSE, 0, group.vertex_buffer
+            )
+            glVertexAttribPointer(
+                self.texcoords, 2, GL_FLOAT, GL_FALSE, 0, group.texcoord_buffer
+            )
 
             glDrawArrays(GL_TRIANGLES, 0, len(group.vertex_buffer))
 
