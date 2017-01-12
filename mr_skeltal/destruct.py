@@ -3,8 +3,6 @@ I'm embracing Python 3.6 here, using __init_subclass__ and relying on the order
 of cls.__dict__
 '''
 import collections
-from collections import OrderedDict as odict
-import operator
 import struct
 
 from .decorator import reify
@@ -54,13 +52,16 @@ class Struct(Type):
             try:
                 result.append((name, child.deserialize(fp)))
             except Exception as e:
-                raise DestructError(f'Error when trying to deserialize {name}') from e
+                raise DestructError(
+                    f'Error when trying to deserialize {name}'
+                ) from e
 
         return dict(result)
 
     def serialize(self, data, fp):
         for name, child in self.children:
             child.serialize(data[name], fp)
+
 
 class Tuple(Type):
     def deserialize(self, fp):
@@ -72,6 +73,7 @@ class Tuple(Type):
     def serialize(self, data, fp):
         for (name, child), element in zip(self.children, data):
             child.serialize(element, fp)
+
 
 class NamedTuple(Type):
     @reify
@@ -132,7 +134,7 @@ class Sequence(Type):
 
 
 class String(Type):
-    def __init__(self, length:int, encoding='utf8'):
+    def __init__(self, length: int, encoding='utf8'):
         super().__init__()
         self.length = length
         self.encoding = encoding
@@ -146,14 +148,13 @@ class String(Type):
         fp.write(data.encode(self.encoding).ljust(self.length, b'\x00'))
 
 
-
 class DynamicString(Type):
     """A string of variable length, stored in file as <length><string>
 
     :param length_type: The `Type` to use to decode the string length
     :param encoding: The encoding of the string stored in the file.
     """
-    def __init__(self, length_type:Number, encoding='utf-8'):
+    def __init__(self, length_type: Number, encoding='utf-8'):
         super().__init__()
         self.length_type = length_type
         self.encoding = encoding

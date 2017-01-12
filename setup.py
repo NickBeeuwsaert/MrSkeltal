@@ -20,5 +20,19 @@ setup(
         'PyOpenGL-accelerate',
         'Pillow',
         'numpy'
-    ]
+    ],
+    extras_require={
+        'dev': [
+            'pyflakes',
+            'flake8-quotes'
+        ],
+        'test': [
+            'pytest'
+        ]
+    },
+    entry_points={
+        'console_scripts': [
+            'mr_skeltal = mr_skeltal.__main__:main'
+        ]
+    }
 )
