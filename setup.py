@@ -20,5 +20,14 @@ setup(
         'PyOpenGL-accelerate',
         'Pillow',
         'numpy'
-    ]
+    ],
+    extras_require={
+        'dev': [
+            'pyflakes',
+            'flake8-quotes'
+        ],
+        'test': [
+            'pytest'
+        ]
+    }
 )
