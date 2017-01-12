@@ -29,5 +29,10 @@ setup(
         'test': [
             'pytest'
         ]
+    },
+    entry_points={
+        'console_scripts': [
+            'mr_skeltal = mr_skeltal.__main__:main'
+        ]
     }
 )
