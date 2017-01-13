@@ -48,11 +48,10 @@ class MS3DModel(object):
             bone.parent_bone = self.bones[bone.parent_name]
             bone.parent_bone.children.append(bone)
 
-        self.vertices.extend(Vertex(vertex, [
-            *weights, 1.0 - sum(weights)
-            ], [
-                bone_id, *bone_ids
-            ]) for (vertex, bone_id), (weights, bone_ids) in zip(
+        self.vertices.extend(Vertex(
+            vertex,
+            list(weights) + [1.0 - sum(weights)], [bone_id] + list(bone_ids)
+        ) for (vertex, bone_id), (weights, bone_ids) in zip(
             map(itemgetter('vertex', 'bone_id'), data['vertices']),
             map(itemgetter('weights', 'bone_ids'), data['vertices_ex'])
         ))
@@ -88,7 +87,7 @@ class MS3DModel(object):
     @property
     def bone_matrices(self):
         return np.array([
-            bone.matrix_at_t(self.timestamp) @ bone.inverse_matrix
+            np.dot(bone.matrix_at_t(self.timestamp), bone.inverse_matrix)
             for bone in self.bones.values()
         ], dtype=np.float32)
 

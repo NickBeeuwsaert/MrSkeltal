@@ -5,6 +5,7 @@ models)
 """
 from textwrap import dedent
 
+import numpy as np
 from OpenGL.GL import (
     glUseProgram,
     glEnableVertexAttribArray,
@@ -85,7 +86,8 @@ class SkinShader(Shader):
         glEnableVertexAttribArray(self.bone_weights)
 
         glUniformMatrix4fv(
-            self.model_view_matrix, 1, GL_TRUE, view_matrix @ model.matrix
+            self.model_view_matrix, 1, GL_TRUE,
+            np.dot(view_matrix, model.matrix)
         )
         glUniformMatrix4fv(
             self.projection_matrix, 1, GL_TRUE, projection_matrix
@@ -159,7 +161,8 @@ class SimpleShader(Shader):
         glEnableVertexAttribArray(self.vertices)
 
         glUniformMatrix4fv(
-            self.model_view_matrix, 1, GL_TRUE, view_matrix @ model.matrix
+            self.model_view_matrix, 1, GL_TRUE,
+            np.dot(view_matrix, model.matrix)
         )
         glUniformMatrix4fv(
             self.projection_matrix, 1, GL_TRUE, projection_matrix

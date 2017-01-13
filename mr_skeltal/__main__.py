@@ -33,8 +33,12 @@ def model_skeleton_matrices(model):
             continue
 
         # Calculate the difference between this bone and its parent bone
-        A = (bone.matrix_at_t(model.timestamp) @ [0, 0, 0, 1])[:3]
-        B = (bone.parent_bone.matrix_at_t(model.timestamp) @ [0, 0, 0, 1])[:3]
+        A = np.dot(
+            bone.matrix_at_t(model.timestamp), [0, 0, 0, 1]
+        )[:3]
+        B = np.dot(
+            bone.parent_bone.matrix_at_t(model.timestamp), [0, 0, 0, 1]
+        )[:3]
         delta = A - B
         scale = np.linalg.norm(delta)
 
@@ -115,7 +119,7 @@ def main():
                 bone_model.render(view_matrix, projection_matrix)
 
         # Rotate the view by 1 degree
-        view_matrix = view_matrix @ rot
+        view_matrix = np.dot(view_matrix, rot)
 
         pygame.display.flip()
         for event in pygame.event.get():
