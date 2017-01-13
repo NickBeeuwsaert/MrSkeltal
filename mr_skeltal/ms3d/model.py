@@ -1,13 +1,22 @@
 from collections import OrderedDict as odict
+from operator import itemgetter
 
 import numpy as np
 
 from .. import texture
 from ..decorator import reify
-from . import Bone, Triangle, Group, Vertex, MS3DSpec, SkinShader, SimpleShader
+from . import (
+    Bone, Triangle, Group, Vertex, Material,
+    MS3DSpec,
+    SkinShader, SimpleShader
+)
 
 
 file_spec = MS3DSpec()
+
+
+def unpack(data, indices):
+    return [data[index] for index in indices]
 
 
 class MS3DModel(object):
@@ -21,18 +30,16 @@ class MS3DModel(object):
         self.bones = odict()
         self.vertices = []
         self.triangles = []
+        self.materials = []
         self.groups = []
         self._timestamp = 0.0
 
-        self.bones.update([
-            (bone['name'], Bone(
-                bone['name'],
-                bone['parent_name'],
-                bone['rotation'],
-                bone['position'],
-                bone['keyframes']
-            )) for bone in data['joints']
-        ])
+        self.bones.update((name, Bone(*bone)) for name, bone in zip(
+            map(itemgetter('name'), data['joints']),
+            map(itemgetter(
+                'name', 'parent_name', 'rotation', 'position', 'keyframes'
+            ), data['joints'])
+        ))
 
         for bone in self.bones.values():
             if not bone.parent_name:
@@ -41,21 +48,34 @@ class MS3DModel(object):
             bone.parent_bone = self.bones[bone.parent_name]
             bone.parent_bone.children.append(bone)
 
-        self.vertices += [Vertex(vert['vertex'], [
-            *vert_ex['weights'], 1.0 - sum(vert_ex['weights'])
-        ], [
-            vert['bone_id'], *vert_ex['bone_ids']
-        ]) for vert, vert_ex in zip(data['vertices'], data['vertices_ex'])]
+        self.vertices.extend(Vertex(vertex, [
+            *weights, 1.0 - sum(weights)
+            ], [
+                bone_id, *bone_ids
+            ]) for (vertex, bone_id), (weights, bone_ids) in zip(
+            map(itemgetter('vertex', 'bone_id'), data['vertices']),
+            map(itemgetter('weights', 'bone_ids'), data['vertices_ex'])
+        ))
 
-        self.triangles += [Triangle([
-            self.vertices[idx] for idx in triangle['vertex_indices']
-        ], triangle['vertex_normals'], list(
-            zip(triangle['s'], triangle['t'])
-        )) for triangle in data['triangles']]
+        self.triangles.extend(Triangle(
+            unpack(self.vertices, indices), normals, list(zip(s, t))
+        ) for indices, normals, s, t in map(
+            itemgetter('vertex_indices', 'vertex_normals', 's', 't'),
+            data['triangles']
+        ))
 
-        self.groups += [Group(group['name'], [
-            self.triangles[idx] for idx in group['triangle_indices']
-        ], 0) for group in data['groups']]
+        self.materials.extend(Material(*mat) for mat in map(itemgetter(
+            'name', 'ambient', 'diffuse', 'specular', 'emissive',
+            'shininess', 'transparency', 'texture', 'alphamap'
+        ), data['materials']))
+
+        self.groups.extend(Group(
+            name, unpack(self.triangles, indices),
+            self.materials[mat_index]
+        ) for name, indices, mat_index in map(
+            itemgetter('name', 'triangle_indices', 'material_index'),
+            data['groups']
+        ))
 
         self.shader = (
             SkinShader(len(self.bones)) if self.bones else SimpleShader()
@@ -93,10 +113,6 @@ class MS3DModel(object):
     def timestamp(self, t):
         if self.animation_length:
             self._timestamp = t % self.animation_length
-
-    @reify
-    def texture(self):
-        return texture.load('uv.png')
 
     @reify
     def bbox(self):

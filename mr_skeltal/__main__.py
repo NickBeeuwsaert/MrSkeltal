@@ -22,6 +22,10 @@ Vector = namedtuple('Vector', 'x y z')
 UP = [0, 1, 0]
 
 
+def lerp(a, b, t):
+    return np.add(a, np.multiply(np.subtract(b, a), t))
+
+
 def model_skeleton_matrices(model):
     for bone in model.bones.values():
         # Skip bones that don't have a parent bone
@@ -82,12 +86,14 @@ def main():
     model_h = max_vert.y - min_vert.y
     model_w = max_vert.x - min_vert.x
 
+    model_center = lerp(min_vert, max_vert, 1 / 2)
+
     distance = max(model_h, model_w) / (2 * math.tan(math.radians(45 / 2)))
     distance = distance + max_vert.z
 
     view_matrix = matrix.look_at(
-        eye=(0, model_h / 2, -distance),
-        center=(0, model_h / 2, 0),
+        eye=np.subtract(model_center, [0, 0, distance]),
+        center=model_center,
         up=UP
     )
 
