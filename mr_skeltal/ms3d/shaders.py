@@ -45,11 +45,14 @@ class SkinShader(Shader):
 
             ivec4 boneIds = ivec4(aBoneIds);
             for(int idx = 0; idx < 4; idx++) {{
-                if(boneIds[idx] == -1) continue;
+                if(boneIds.x == -1) continue;
                 newVertex +=
-                    uBoneMatrices[boneIds[idx]] *
+                    uBoneMatrices[boneIds.x] *
                     vec4(aVertex, 1.0) *
                     aBoneWeights[idx];
+                // Rotate bone ids
+                // (if I just index this it causes a crash on some GPUs)
+                boneIds = boneIds.yzwx;
             }}
 
             gl_Position = uPMatrix * uMVMatrix * vec4(newVertex.xyz, 1.0);
