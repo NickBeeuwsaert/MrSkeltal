@@ -5,6 +5,7 @@ models)
 """
 from textwrap import dedent
 
+import numpy as np
 from OpenGL.GL import (
     glUseProgram,
     glEnableVertexAttribArray,
@@ -84,10 +85,9 @@ class SkinShader(Shader):
         glEnableVertexAttribArray(self.bone_ids)
         glEnableVertexAttribArray(self.bone_weights)
 
-        glBindTexture(GL_TEXTURE_2D, model.texture)
-        glUniform1i(self.texture, 0)
         glUniformMatrix4fv(
-            self.model_view_matrix, 1, GL_TRUE, view_matrix @ model.matrix
+            self.model_view_matrix, 1, GL_TRUE,
+            np.dot(view_matrix, model.matrix)
         )
         glUniformMatrix4fv(
             self.projection_matrix, 1, GL_TRUE, projection_matrix
@@ -97,6 +97,9 @@ class SkinShader(Shader):
         )
 
         for group in model.groups:
+            glBindTexture(GL_TEXTURE_2D, group.material.texture)
+            glUniform1i(self.texture, 0)
+
             glVertexAttribPointer(
                 self.bone_ids, 4, GL_SHORT, GL_FALSE, 0, group.bone_id_buffer
             )
@@ -157,16 +160,17 @@ class SimpleShader(Shader):
         glEnableVertexAttribArray(self.texcoords)
         glEnableVertexAttribArray(self.vertices)
 
-        glBindTexture(GL_TEXTURE_2D, model.texture)
-        glUniform1i(self.texture, 0)
         glUniformMatrix4fv(
-            self.model_view_matrix, 1, GL_TRUE, view_matrix @ model.matrix
+            self.model_view_matrix, 1, GL_TRUE,
+            np.dot(view_matrix, model.matrix)
         )
         glUniformMatrix4fv(
             self.projection_matrix, 1, GL_TRUE, projection_matrix
         )
 
         for group in model.groups:
+            glBindTexture(GL_TEXTURE_2D, group.material.texture)
+            glUniform1i(self.texture, 0)
             glVertexAttribPointer(
                 self.vertices, 3, GL_FLOAT, GL_FALSE, 0, group.vertex_buffer
             )

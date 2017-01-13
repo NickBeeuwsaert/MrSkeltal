@@ -1,5 +1,3 @@
-from functools import lru_cache
-
 import numpy as np
 
 from ..decorator import reify
@@ -67,14 +65,14 @@ class Bone(object):
     def matrix(self):
         mat = self.local_matrix
         if self.parent_bone:
-            mat = self.parent_bone.matrix @ mat
+            mat = np.dot(self.parent_bone.matrix, mat)
         return mat
 
     @reify
     def inverse_matrix(self):
         mat = self.inverse_local_matrix
         if self.parent_bone:
-            mat = mat @ self.parent_bone.inverse_matrix
+            mat = np.dot(mat, self.parent_bone.inverse_matrix)
         return mat
 
     def rotation_matrix_at_t(self, t):
@@ -84,13 +82,14 @@ class Bone(object):
         return matrix.translate(self.translation_keyframes.frame_at_time(t))
 
     def local_matrix_at_t(self, t):
-        return self.translation_matrix_at_t(t) @ self.rotation_matrix_at_t(t)
+        return np.dot(
+            self.translation_matrix_at_t(t), self.rotation_matrix_at_t(t)
+        )
 
-    @lru_cache(None)
     def matrix_at_t(self, t):
-        mat = self.local_matrix @ self.local_matrix_at_t(t)
+        mat = np.dot(self.local_matrix, self.local_matrix_at_t(t))
 
         if self.parent_bone:
-            mat = self.parent_bone.matrix_at_t(t) @ mat
+            mat = np.dot(self.parent_bone.matrix_at_t(t), mat)
 
         return mat

@@ -1,7 +1,14 @@
 from io import BytesIO
+import sys
+
+import pytest
 
 from mr_skeltal import destruct
 
+pytestmark = pytest.mark.skipif(
+    sys.version_info < (3, 6),
+    reason='Testing functionality introduced in Python3.6 (PEP520)'
+)
 
 # Test binary for decoding
 BINARY_FILE = (b'Hello, world!\x00\x00\x00\x00\x00\x00\x00'
@@ -40,40 +47,34 @@ TEST_DATA = dict(
 
 
 class NamedTuple(destruct.NamedTuple):
-    __types__ = [
-        ('x', destruct.Number('f', '<')),
-        ('y', destruct.Number('f', '<')),
-        ('z', destruct.Number('f', '<')),
-    ]
+    x = destruct.Number('f', '<')
+    y = destruct.Number('f', '<')
+    z = destruct.Number('f', '<')
 
 
 class SomeChild(destruct.Struct):
-    __types__ = [
-        ('dynamic_string', destruct.DynamicString(destruct.Number('h', '<'))),
-        ('named_tuple_inline', destruct.Tuple(
-            destruct.Number('f', '<'),
-            destruct.Number('f', '<'),
-            destruct.Number('f', '<')
-        )),
-        ('named_tuple', NamedTuple())
-    ]
+    dynamic_string = destruct.DynamicString(destruct.Number('h', '<'))
+    named_tuple_inline = destruct.NamedTuple(
+        x=destruct.Number('f', '<'),
+        y=destruct.Number('f', '<'),
+        z=destruct.Number('f', '<')
+    )
+    named_tuple = NamedTuple()
 
 
 class SomeStruct(destruct.Struct):
-    __types__ = [
-        ('string', destruct.String(20)),
-        ('byte', destruct.Number('b', '<')),
-        ('unsigned_byte', destruct.Number('B', '<')),
-        ('unsigned_short', destruct.Number('H', '<')),
-        ('short', destruct.Number('h', '<')),
-        ('unsigned_integer', destruct.Number('I', '<')),
-        ('integer', destruct.Number('i', '<')),
+    string = destruct.String(20)
+    byte = destruct.Number('b', '<')
+    unsigned_byte = destruct.Number('B', '<')
+    unsigned_short = destruct.Number('H', '<')
+    short = destruct.Number('h', '<')
+    unsigned_integer = destruct.Number('I', '<')
+    integer = destruct.Number('i', '<')
 
-        ('sequence', destruct.Sequence(
-            destruct.Number('H', '<'),
-            SomeChild()
-        ))
-    ]
+    sequence = destruct.Sequence(
+        destruct.Number('H', '<'),
+        SomeChild()
+    )
 
 
 spec = SomeStruct()

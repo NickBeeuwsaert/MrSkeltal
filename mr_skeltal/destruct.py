@@ -13,10 +13,10 @@ class DestructError(Exception):
 
 
 class Type(object):
+    __types__ = []
 
     def __init__(self, *args, **kwargs):
-
-        self.children = self.__child_types__ + [
+        self.children = self.__types__ + [
             ('', child) for child in args if isinstance(child, Type)
         ] + [
             (name, child)
@@ -26,19 +26,23 @@ class Type(object):
 
     def deserialize(self, fp):
         raise NotImplementedError(
-            f'{self.__class__.__name__} doesn\'t implement deserialize'
+            '{name} doesn\'t implement deserialize'.format(
+                name=self.__class__.__name__
+            )
         )
 
     def serialize(self, fp):
         raise NotImplementedError(
-            f'{self.__class__.__name__} doesn\'t implement serialize'
+            '{name} doesn\'t implement serialize'.format(
+                name=self.__class__.__name__
+            )
         )
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
-        cls.__child_types__ = [
+        cls.__types__ = cls.__types__ + [
             (name, child)
             for name, child in vars(cls).items()
             if isinstance(child, Type)
@@ -46,6 +50,7 @@ class Type(object):
 
 
 class Struct(Type):
+    """A mapping of values"""
     def deserialize(self, fp):
         result = []
         for name, child in self.children:
@@ -53,7 +58,9 @@ class Struct(Type):
                 result.append((name, child.deserialize(fp)))
             except Exception as e:
                 raise DestructError(
-                    f'Error when trying to deserialize {name}'
+                    'Error when trying to deserialize {name}'.format(
+                        name=name
+                    )
                 ) from e
 
         return dict(result)
@@ -64,6 +71,7 @@ class Struct(Type):
 
 
 class Tuple(Type):
+    """A tuple of values."""
     def deserialize(self, fp):
         return tuple(
             child.deserialize(fp)
@@ -76,6 +84,7 @@ class Tuple(Type):
 
 
 class NamedTuple(Type):
+    """Like the Tuple type, but uses a NamedTuple."""
     @reify
     def namedtuple(self):
         return collections.namedtuple(
@@ -95,13 +104,18 @@ class NamedTuple(Type):
 
 
 class Number(Type):
+    """A number in the file. Really, this is just a thin wrapper around `struct`
+
+    :param fmt: The `struct` fmt to use
+    :param byte_order: The byte order to use, defaults to the hosts byteorder
+    """
     def __init__(self, fmt, byte_order='='):
         self.fmt = fmt
         self.byte_order = byte_order
 
     @reify
     def struct(self):
-        return struct.Struct(f'{self.byte_order}{self.fmt}')
+        return struct.Struct('{byte_order}{fmt}'.format_map(vars(self)))
 
     def deserialize(self, fp):
         raw_data = fp.read(self.struct.size)
@@ -113,7 +127,12 @@ class Number(Type):
 
 
 class Sequence(Type):
-    def __init__(self, length_type: Number, target_type: Type):
+    """A variable-length sequence.
+
+    :param length_type: The type to use to decode the length of the sequence
+    :param target_type: The type to decode <length> times
+    """
+    def __init__(self, length_type, target_type):
         super().__init__()
         self.length_type = length_type
         self.target_type = target_type
@@ -134,7 +153,12 @@ class Sequence(Type):
 
 
 class String(Type):
-    def __init__(self, length: int, encoding='utf8'):
+    """A fixed length string.
+
+    :param length: length of the string in bytes
+    :param encoding: The encoding to use, defaults to UTF8
+    """
+    def __init__(self, length, encoding='utf8'):
         super().__init__()
         self.length = length
         self.encoding = encoding
@@ -154,7 +178,7 @@ class DynamicString(Type):
     :param length_type: The `Type` to use to decode the string length
     :param encoding: The encoding of the string stored in the file.
     """
-    def __init__(self, length_type: Number, encoding='utf-8'):
+    def __init__(self, length_type, encoding='utf-8'):
         super().__init__()
         self.length_type = length_type
         self.encoding = encoding
@@ -170,7 +194,12 @@ class DynamicString(Type):
 
 
 class Signature(Type):
-    def __init__(self, signature: bytes):
+    """A static file signature. Throws an error if the signature doesn't match
+    the signature configured.
+
+    :param signature: The signature as a type
+    """
+    def __init__(self, signature):
         super().__init__()
         self.signature = signature
 

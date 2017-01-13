@@ -1,10 +1,7 @@
+from ..decorator import reify
+from .. import texture
+
 class Material(object):
-    __slots__ = [
-        'name',
-        'ambient', 'diffuse', 'specular', 'emissive',
-        'shininess', 'transparency',
-        'texture', 'alphamap'
-    ]
 
     def __init__(
         self, name,
@@ -19,5 +16,15 @@ class Material(object):
         self.emissive = emissive
         self.shininess = shininess
         self.transparency = transparency
-        self.texture = texture
-        self.alphamap = alphamap
+        self._texture = texture
+        self._alphamap = alphamap
+
+    @reify
+    def texture(self):
+        # Load the models texture, or, if the texture name is empty,
+        # Load the test UV grid
+        return texture.load(self._texture or 'textures/uv.png')
+
+    @reify
+    def alphamap(self):
+        return texture.load(self._alphamap)

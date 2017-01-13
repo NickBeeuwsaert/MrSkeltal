@@ -22,6 +22,10 @@ Vector = namedtuple('Vector', 'x y z')
 UP = [0, 1, 0]
 
 
+def lerp(a, b, t):
+    return np.add(a, np.multiply(np.subtract(b, a), t))
+
+
 def model_skeleton_matrices(model):
     for bone in model.bones.values():
         # Skip bones that don't have a parent bone
@@ -29,8 +33,12 @@ def model_skeleton_matrices(model):
             continue
 
         # Calculate the difference between this bone and its parent bone
-        A = (bone.matrix_at_t(model.timestamp) @ [0, 0, 0, 1])[:3]
-        B = (bone.parent_bone.matrix_at_t(model.timestamp) @ [0, 0, 0, 1])[:3]
+        A = np.dot(
+            bone.matrix_at_t(model.timestamp), [0, 0, 0, 1]
+        )[:3]
+        B = np.dot(
+            bone.parent_bone.matrix_at_t(model.timestamp), [0, 0, 0, 1]
+        )[:3]
         delta = A - B
         scale = np.linalg.norm(delta)
 
@@ -91,12 +99,14 @@ def main():
     model_h = max_vert.y - min_vert.y
     model_w = max_vert.x - min_vert.x
 
+    model_center = lerp(min_vert, max_vert, 1 / 2)
+
     distance = max(model_h, model_w) / (2 * math.tan(math.radians(45 / 2)))
     distance = distance + max_vert.z
 
     view_matrix = matrix.look_at(
-        eye=(0, model_h / 2, -distance),
-        center=(0, model_h / 2, 0),
+        eye=np.subtract(model_center, [0, 0, distance]),
+        center=model_center,
         up=UP
     )
 
@@ -118,7 +128,7 @@ def main():
                 bone_model.render(view_matrix, projection_matrix)
 
         # Rotate the view by 1 degree
-        view_matrix = view_matrix @ rot
+        view_matrix = np.dot(view_matrix, rot)
 
         sdl2.gl.swap_window(window)
         for event in sdl2.event.poll():
