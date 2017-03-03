@@ -19,7 +19,8 @@ setup(
         'PyOpenGL',
         'PyOpenGL-accelerate',
         'Pillow',
-        'numpy'
+        'numpy',
+        'pygame'
     ],
     extras_require={
         'dev': [
