@@ -1,4 +1,3 @@
--e git+https://github.com/NickBeeuwsaert/MrSkeltal@2f840b2b38ed15f0e891faf25319e2c4f8d5f8b5#egg=MrSkeltal
 numpy==1.12.0
 olefile==0.44
 Pillow==4.0.0
