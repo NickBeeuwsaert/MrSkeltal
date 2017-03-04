@@ -1,5 +1,9 @@
-numpy==1.11.3
-olefile==0.43
+numpy==1.12.0
+olefile==0.44
 Pillow==4.0.0
+<<<<<<< HEAD
+=======
+pygame==1.9.3
+>>>>>>> master
 PyOpenGL==3.1.0
 PyOpenGL-accelerate==3.1.0

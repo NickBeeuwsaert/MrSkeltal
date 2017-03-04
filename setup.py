@@ -16,10 +16,11 @@ setup(
         'mr_skeltal'
     ],
     install_requires=[
+        'numpy',
         'PyOpenGL',
         'PyOpenGL-accelerate',
         'Pillow',
-        'numpy'
+        'pygame'
     ],
     extras_require={
         'dev': [
