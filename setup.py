@@ -18,7 +18,6 @@ setup(
     install_requires=[
         'numpy',
         'PyOpenGL',
-        'PyOpenGL-accelerate',
         'Pillow',
         'pygame'
     ],
